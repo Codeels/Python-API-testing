@@ -1,0 +1,53 @@
+name: DummyAPI_test
+
+on: workflow_dispatch
+
+permissions:
+  checks: write
+  pull-requests: write
+  contents: read
+
+jobs:
+  DummyAPI_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: repo check-out
+        uses: actions/checkout@v3
+      
+      - name: python install
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      - name: python dependencies install
+        uses: py-actions/py-dependency-install@v3
+        with:
+          path: "requirements.txt"
+
+      - name: tests run
+#        if: always()
+        run: pytest --alluredir=allure-results DummyAPI.py
+        continue-on-error: false
+
+      - name: get Allure history
+        uses: actions/checkout@v2
+        if: always()
+        continue-on-error: false
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Test marketplace action
+        uses: simple-elf/allure-report-action@master
+        if: always()
+        with:
+          allure_results: allure-results
+          allure_history: allure-history
+
+      - name: Deploy report to Github Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v2
+        env:
+          PERSONAL_TOKEN: ${{ secrets.ALLURE_DEPLOY }}
+          PUBLISH_BRANCH: gh-pages
+          PUBLISH_DIR: allure-history
