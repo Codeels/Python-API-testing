@@ -1,7 +1,5 @@
 import time
-
 import requests
-from pprint import pprint
 import pytest
 import allure
 
@@ -13,12 +11,12 @@ limit_list = [4, 5, 6, 25, 49, 50, 51]
 pages_list = [-1, 0, 1, 500, 998, 999, 1000]
 test_email = f"test{time.strftime('%H%M%S')}@mail.com"
 
-# TODO сделать yaml файл для CI
 
 class Check():
     @staticmethod
     def status_code(response: object, status_code: int):
-        assert response.status_code == status_code, f'Неверный статус код: {response.status_code}\n'
+        assert response.status_code == status_code, \
+            f'Неверный статус код. Получен {response.status_code} вместо {status_code}\n'
         print(f'Статус код верный - {response.status_code}\n')
 
     @staticmethod
@@ -33,12 +31,14 @@ class Check():
 
     @staticmethod
     def page(response: object, page: int):
-        assert response.json().get('page') == page, f'Неверная страница: {response.json().get("page")}\n'
+        assert response.json().get('page') == page, \
+            f'Неверная страница. Получена {response.json().get("page")} вместо {page}\n'
         print(f'Страница верная - {response.json().get("page")}\n')
 
     @staticmethod
     def limit(response: object, limit: int):
-        assert response.json().get('limit') == limit, f'Неверный лимит: {response.json().get("limit")}\n'
+        assert response.json().get('limit') == limit, \
+            f'Неверный лимит. Получен {response.json().get("limit")} вместо {limit}\n'
         print(f'Лимит верный - {response.json().get("limit")}\n')
 
 
