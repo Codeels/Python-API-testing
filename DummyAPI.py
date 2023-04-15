@@ -13,13 +13,8 @@ limit_list = [4, 5, 6, 25, 49, 50, 51]
 pages_list = [-1, 0, 1, 500, 998, 999, 1000]
 test_email = f"test{time.strftime('%H%M%S')}@mail.com"
 
-
-# test_email = f"test{time.time_ns()}@mail.com"
-
-
-# TODO добавить подписи для Allure
 # TODO сделать yaml файл для CI
-# TODO загрузить на GitHub
+
 class Check():
     @staticmethod
     def status_code(response: object, status_code: int):
@@ -57,7 +52,6 @@ class TestPaging():
     def test_paging_limits(limit):
         limit_url = base_url + f'user?limit={limit}'
         response = requests.get(limit_url, headers=headers)
-        result = response.json()
         Check.limit(response, limit)
 
     @staticmethod
@@ -68,7 +62,6 @@ class TestPaging():
     def test_paging_pages(page):
         page_url = base_url + f'user?page={page}'
         response = requests.get(page_url, headers=headers)
-        result = response.json()
         Check.page(response, page)
 
 
@@ -81,7 +74,6 @@ class TestGetPosts():
     def test_get_posts_by_user(user_id, status_code):
         post_by_user_url = base_url + f'user/{user_id}/post'
         response = requests.get(post_by_user_url, headers=headers)
-        result = response.json()
         Check.status_code(response, status_code)
 
     @staticmethod
@@ -91,13 +83,11 @@ class TestGetPosts():
     def test_get_post_by_id(post_id, status_code):
         post_by_id_url = base_url + f'post/{post_id}'
         response = requests.get(post_by_id_url, headers=headers)
-        result = response.json()
         Check.status_code(response, status_code)
 
 
 @allure.title("CRUD steps test")
 class TestUser():
-
 
     @pytest.mark.parametrize("first_name, last_name, email, status_code",
                              [("firstname", "lastname", test_email, 200),
@@ -110,6 +100,7 @@ class TestUser():
                                            marks=pytest.mark.xfail),
                               pytest.param("test1", "test1", "", 400, marks=pytest.mark.xfail),
                               pytest.param("", "", "", 400, marks=pytest.mark.xfail)])
+    @allure.step("user create")
     def test_create_user(self, first_name, last_name, email, status_code):
         body = {
             'firstName': f'{first_name}',
@@ -119,16 +110,11 @@ class TestUser():
         create_user_url = base_url + "user/create"
         response = requests.post(create_user_url, headers=headers, data=body)
         result = response.json()
-        pprint(result, indent=4)
         user_id = result.get('id')
         Check.status_code(response, status_code)
-        print(user_id)
-        print(type(user_id))
         return user_id
 
     user_id = test_create_user("self", "test1", "test1", f"test{time.strftime('%H%M%S1')}@mail.com", 200)
-
-    # TODO разобраться с передачей id из функции выше
 
     @staticmethod
     @pytest.mark.parametrize("first_name, last_name, status_code",
@@ -139,6 +125,7 @@ class TestUser():
     @pytest.mark.parametrize("user_id",
                              [user_id,
                               pytest.param(f"{user_id}bad", marks=pytest.mark.xfail)])
+    @allure.step("user edit")
     def test_edit_user(first_name, last_name, status_code, user_id):
         body = {
             'firstName': f'{first_name}',
@@ -146,8 +133,6 @@ class TestUser():
         }
         edit_user_url = base_url + f"user/{user_id}"
         response = requests.put(edit_user_url, headers=headers, data=body)
-        result = response.json()
-        pprint(result)
         Check.status_code(response, status_code)
         Check.first_name(response, first_name)
         Check.last_name(response, last_name)
@@ -156,32 +141,33 @@ class TestUser():
     @pytest.mark.parametrize("user_id, status_code",
                              [(user_id, 200),
                               pytest.param(f"{user_id}bad", 400, marks=pytest.mark.xfail)])
+    @allure.step("user get")
     def test_get_user(user_id, status_code):
         get_user_url = base_url + f'user/{user_id}'
         response = requests.get(get_user_url, headers=headers)
-        result = response.json()
-        pprint(result, indent=4)
         Check.status_code(response, status_code)
 
     @staticmethod
     @pytest.mark.parametrize("user_id, status_code",
                              [(user_id, 200),
                               pytest.param(f"{user_id}bad", 400, marks=pytest.mark.xfail)])
+    @allure.step("user delete")
     def test_delete_user(user_id, status_code):
         delete_user_url = base_url + f'user/{user_id}'
         response = requests.delete(delete_user_url, headers=headers)
-        result = response.json()
-        pprint(result, indent=4)
         Check.status_code(response, status_code)
 
 
-@allure.title("User CRUD")
-class TestUserCRUD():
-    test_email = f"test{time.strftime('%H%M%S')}@mail.com"
-    test = TestUser()
-    user_id = test.test_create_user("firstname", "lastname", test_email, 200)
-    test.test_get_user(user_id, 200)
-    test.test_edit_user("new_firstname", "new_lastname", 200, user_id)
-    test.test_get_user(user_id, 200)
-    test.test_delete_user(user_id, 200)
-    test.test_get_user(user_id, 404)
+@allure.title("User CRUD - Smoke test")
+class TestCRUD():
+
+    @staticmethod
+    def test_user_crud():
+        test_email = f"test{time.strftime('%H%M%S')}@mail.com"
+        test = TestUser()
+        user_id = test.test_create_user("firstname", "lastname", test_email, 200)
+        test.test_get_user(user_id, 200)
+        test.test_edit_user("new_firstname", "new_lastname", 200, user_id)
+        test.test_get_user(user_id, 200)
+        test.test_delete_user(user_id, 200)
+        test.test_get_user(user_id, 404)
