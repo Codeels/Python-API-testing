@@ -1,5 +1,11 @@
 # Пример работы с API в Python и Postman
 
+Команда для установки пакетов из requirements.txt: pip install -r requirements.txt
+
+Команда для запуска тестов: pytest -sv --alluredir=test_results/ "название файла.py"
+
+Команда для просмотра отчетов allure: allure serve test_results/
+
 
 ### Использованы следующие API:
 * DummyAPI (Python и Postman)
@@ -18,6 +24,7 @@
 * проверка удаления пользователя (delete user; с правильным/неправильным id пользователя)
 * проверка операций CRUD на одном пользователе 
 + проверки статус-кода, имени, фамилии, номера страницы и limit
+
 
 #### Rahulshettyacademy API ("CRUD implementation.py"):
 1. создание новой локации
